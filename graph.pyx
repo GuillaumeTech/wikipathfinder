@@ -16,32 +16,38 @@ def get_path(np.ndarray[cpl_t,ndim=1] graph, int start, int end):
     cdef int int_start = start // 4
     cdef int int_end = end // 4
 
-    queue = deque([[int_start]])
+    queue = deque([int_start])
     graph[int_start] = 1
 
-    cdef list path
-    cdef int node
-    cdef int neightbors_count
-    cdef np.ndarray neightbors_bytes_offset
-    cdef np.ndarray neightbors
-    cdef list new_path
-    while queue:
-        path = queue.pop()
-        node = path[-1]
-        graph[node] = 1
-        neightbors_count = graph[node + 1]
-        neightbors_bytes_offset = graph[node + HEADER_SIZE : node + HEADER_SIZE + neightbors_count]
-        neightbors = neightbors_bytes_offset  // 4
 
-        for neightbor in neightbors:
-            if ( not (graph[neightbor])):
-                new_path = list(path)
-                new_path.append(neightbor)
-                queue.appendleft(new_path)
-                if (neightbor == int_end):
+    cdef int node
+    cdef int neighbours_count
+    cdef np.ndarray neighbors_bytes_offset
+    cdef np.ndarray neighbours
+
+    while queue:
+        node = queue.pop()
+        neighbours_count = graph[node + 1]
+        neighbours_bytes_offset = graph[node + HEADER_SIZE : node + HEADER_SIZE + neighbours_count]
+        neighbours = neighbours_bytes_offset // 4
+        for neighbour in neighbours:
+            if ((graph[neighbour]) == 0):
+                queue.appendleft(neighbour)
+                graph[neighbour] = node
+                if (neighbour == int_end):
                     t1_stop = time.perf_counter()
                     print(t1_stop-t1_start)
-                    return new_path
+                    return workout_path(graph, int_start, int_end)
+
+
+def workout_path(graph, start, end):
+    queue = deque([end])
+    node = graph[end]
+    while node != start:
+        queue.appendleft(node)
+        node = graph[node]
+    queue.appendleft(start)
+    return queue
 
 
 
